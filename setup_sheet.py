@@ -66,7 +66,8 @@ WORKPLAN_HEADERS = [
     "Task ID", "Workstream", "Phase", "Main Task",
     "Description of Activity", "Responsible Owner",
     "Key Deliverable", "Start Date", "End Date",
-    "Duration (Wks)", "Dependencies", "Critical Path", "Status", "Notes",
+    "Duration (Wks)", "Dependencies", "Critical Path",
+    "Escalation", "Status", "Notes",
 ]
 
 MEETINGS_HEADERS = [
@@ -124,6 +125,7 @@ INSTRUCTIONS_ROWS = [
     ["Duration (Wks)",    "Free text — not used by the dashboard."],
     ["Dependencies",      "Free text — not used by the dashboard."],
     ["Critical Path",     "Write 'GATE' here to flag a milestone task with a star badge."],
+    ["Escalation",        "VALID VALUES: Strategic | Operational  (or leave blank for —)"],
     ["Status",            "VALID VALUES: Completed | In Progress | Overdue | Not Started"],
     ["",                  "Leave blank to auto-derive from today vs Start/End Date."],
     ["Notes",             "Internal notes — not displayed."],

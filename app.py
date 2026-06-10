@@ -75,28 +75,6 @@ footer    { visibility: hidden; }
 [data-testid="stDecoration"] { visibility: hidden; }
 .stDeployButton { display: none !important; }
 
-.meta-strip {
-    background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px;
-    padding: 14px 24px; display: flex; align-items: center; gap: 40px; margin-bottom: 20px;
-}
-.meta-field label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: #94A3B8; display: block; margin-bottom: 2px; }
-.meta-field span  { font-size: 0.88rem; font-weight: 600; color: #0D1B2A; }
-
-/* compact top strip */
-.topstrip {
-    background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px;
-    padding: 10px 20px; display: flex; align-items: center;
-    gap: 0; margin-bottom: 20px;
-}
-.topstrip-brand { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; padding-right: 24px; border-right: 1px solid #E2E8F0; }
-.topstrip-brand-title { font-family: 'DM Sans',sans-serif; font-size: 0.95rem; font-weight: 600; color: #0D1B2A; white-space: nowrap; }
-.topstrip-fields { display: flex; align-items: center; gap: 0; flex: 1; }
-.topstrip-field { padding: 0 20px; border-right: 1px solid #E2E8F0; }
-.topstrip-field:last-child { border-right: none; }
-.topstrip-field-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: #94A3B8; margin-bottom: 2px; }
-.topstrip-field-value { font-size: 0.82rem; font-weight: 600; color: #0D1B2A; white-space: nowrap; }
-.topstrip-date { margin-left: auto; font-size: 0.75rem; color: #64748B; white-space: nowrap; padding-left: 20px; }
-
 .kpi-row { display: flex; gap: 16px; margin-bottom: 20px; }
 .kpi-card { flex: 1; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 18px 20px; position: relative; overflow: hidden; }
 .kpi-card::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
@@ -225,11 +203,12 @@ with row1_right:
         st.rerun()
     st.caption(f"Loaded: {today.strftime('%d %b %Y')}")
 
-# ── Row 2: project meta fields ────────────────────────────────────────────────
+# ── Row 2: project meta fields — full width, evenly distributed ───────────────
+# Change 1: each field uses flex:1 so they fill the full row width
 def _field(label, value, border=True):
     sep = "border-right:1px solid #E2E8F0;" if border else ""
     return f"""
-<div style="padding:0 20px;{sep}">
+<div style="flex:1;padding:0 20px;{sep}">
     <div style="font-size:0.62rem;text-transform:uppercase;letter-spacing:0.08em;
                 color:#94A3B8;margin-bottom:3px">{label}</div>
     <div style="font-size:0.82rem;font-weight:600;color:#0D1B2A;
@@ -237,10 +216,10 @@ def _field(label, value, border=True):
 </div>"""
 
 timeline_bar = f"""
-<div style="padding:0 20px">
+<div style="flex:1;padding:0 20px">
     <div style="font-size:0.62rem;text-transform:uppercase;letter-spacing:0.08em;
                 color:#94A3B8;margin-bottom:6px">Timeline</div>
-    <div style="width:140px;background:#EEF2FF;border-radius:4px;height:6px">
+    <div style="background:#EEF2FF;border-radius:4px;height:6px">
         <div style="background:#C8963E;width:{progress_pct:.1f}%;
                     height:6px;border-radius:4px"></div>
     </div>
@@ -358,14 +337,12 @@ def badge(s):
     cls = m.get(s, "b-notstarted")
     return f'<span class="badge {cls}">{s}</span>'
 
-# ── workplan filters: workstream checkboxes + status dropdown side by side ────
-
-# Initialise individual checkbox keys (source of truth — not a derived list)
+# Initialise individual checkbox keys (source of truth)
 for ws in all_ws:
     if f"wp_cb_{ws}" not in st.session_state:
         st.session_state[f"wp_cb_{ws}"] = True
 
-# Handle All / Clear flags set by buttons on the PREVIOUS run
+# Handle All / Clear flags
 if st.session_state.pop("_do_select_all", False):
     for ws in all_ws:
         st.session_state[f"wp_cb_{ws}"] = True
@@ -373,7 +350,6 @@ if st.session_state.pop("_do_clear_all", False):
     for ws in all_ws:
         st.session_state[f"wp_cb_{ws}"] = False
 
-# Derive current selection from the (now up-to-date) checkbox keys
 new_sel = [ws for ws in all_ws if st.session_state.get(f"wp_cb_{ws}", True)]
 n_sel = len(new_sel)
 ws_count_label = (
@@ -391,11 +367,9 @@ with filter_col:
         <span class="wp-filter-count">{ws_count_label}</span>
     </div>
     """, unsafe_allow_html=True)
-
     cb_cols = st.columns(3)
     for i, ws in enumerate(all_ws):
         cb_cols[i % 3].checkbox(ws, key=f"wp_cb_{ws}")
-
     sa_col, sc_col, _ = st.columns([1, 1, 4])
     if sa_col.button("✅ All", key="wp_sel_all"):
         st.session_state["_do_select_all"] = True
@@ -412,14 +386,10 @@ with status_col:
     """, unsafe_allow_html=True)
     all_statuses = ["Completed", "In Progress", "Overdue", "Not Started"]
     status_filter = st.multiselect(
-        "status_filter",
-        options=all_statuses,
-        default=all_statuses,
-        label_visibility="collapsed",
-        key="wp_status_filter",
+        "status_filter", options=all_statuses, default=all_statuses,
+        label_visibility="collapsed", key="wp_status_filter",
     )
 
-# Apply both filters
 df_wp = df_f[
     df_f["Workstream"].isin(new_sel) &
     df_f["resolved_status"].isin(status_filter if status_filter else all_statuses)
@@ -427,22 +397,25 @@ df_wp = df_f[
 
 rows_html = ""
 for ws_name, grp in df_wp.groupby("Workstream", sort=False):
-    rows_html += f'<tr class="ws-header"><td colspan="5">{ws_name}</td></tr>'
+    rows_html += f'<tr class="ws-header"><td colspan="6">{ws_name}</td></tr>'
     for _, r in grp.iterrows():
         end_s     = fmt_short(r["_end_date"]) if pd.notna(r.get("_end_date")) and r.get("_end_date") else "—"
         gate      = '<span class="gate">★ GATE</span>' if r.get("is_gate") else ""
         comp_s    = r["resolved_status"]
         comp_icon = '<span class="tick">✓</span>' if comp_s == "Completed" else '<span class="cross">✗</span>'
+        escal     = str(r.get("Escalation", "—")).strip()
+        if escal in ("", "nan"): escal = "—"
         rows_html += f"""<tr>
   <td>{r.get('Main Task','')}{gate}</td>
   <td style="text-align:center">{comp_icon}</td>
   <td><span class="dchip">{end_s}</span></td>
   <td>{str(r.get('Responsible Owner','—'))}</td>
+  <td>{escal}</td>
   <td>{badge(comp_s)}</td>
 </tr>"""
 
 if not rows_html:
-    rows_html = '<tr><td colspan="5" style="text-align:center;color:#94A3B8;padding:20px">No tasks match the selected filters.</td></tr>'
+    rows_html = '<tr><td colspan="6" style="text-align:center;color:#94A3B8;padding:20px">No tasks match the selected filters.</td></tr>'
 
 st.markdown(f"""
 <div class="card" style="padding-bottom:16px">
@@ -450,11 +423,12 @@ st.markdown(f"""
   <div class="wp-wrap" style="max-height:420px;overflow-y:auto">
     <table class="wp">
       <thead style="position:sticky;top:0;z-index:2"><tr>
-        <th style="width:34%">Task</th>
-        <th style="width:8%;text-align:center">Done</th>
-        <th style="width:15%">Due Date</th>
-        <th style="width:20%">Responsible Owner</th>
-        <th style="width:13%">Status</th>
+        <th style="width:30%">Task</th>
+        <th style="width:6%;text-align:center">Done</th>
+        <th style="width:13%">Due Date</th>
+        <th style="width:18%">Responsible Owner</th>
+        <th style="width:10%">Escalation</th>
+        <th style="width:11%">Status</th>
       </tr></thead>
       <tbody>{rows_html}</tbody>
     </table>
@@ -466,8 +440,8 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# ── upcoming: meetings (left) + top 10 urgent deliverables (right) ────────────
-up_l, up_r = st.columns(2, gap="medium")
+# ── upcoming: meetings (left) + top 10 urgent tasks (right) ──────────────────
+up_l, up_r = st.columns([1, 1], gap="medium")
 
 with up_l:
     mtg_html = ""
@@ -482,32 +456,32 @@ with up_l:
 </div>"""
     if not mtg_html:
         mtg_html = "<div style='color:#94A3B8;font-size:0.83rem'>No upcoming meetings.</div>"
-    st.markdown(f'<div class="card"><div class="card-title">Upcoming — Meetings</div>{mtg_html}</div>',
-                unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="card" style="height:auto !important;min-height:460px">'
+        f'<div class="card-title">Upcoming — Meetings</div>'
+        f'<div style="max-height:400px;overflow-y:auto">{mtg_html}</div></div>',
+        unsafe_allow_html=True,
+    )
 
 with up_r:
-    # Top 10 most urgent deliverables: sort by days until due (ascending),
-    # overdue tasks first (negative days), exclude completed
+    # Change 2: source from workplan (df_f) using _end_date, not df_dl
     today_d = date.today()
 
     def _urgency_days(row):
-        d = row.get("_due_date")
+        d = row.get("_end_date")
         if d and pd.notna(d):
             return (d - today_d).days
-        return 9999  # no date → push to end
+        return 9999
 
-    if not df_dl.empty:
-        urgent = df_dl[df_dl["resolved_status"] != "Completed"].copy()
-        urgent["_days_left"] = urgent.apply(_urgency_days, axis=1)
-        urgent = urgent.sort_values("_days_left").head(10)
-    else:
-        urgent = pd.DataFrame()
+    urgent = df_f[df_f["resolved_status"] != "Completed"].copy()
+    urgent["_days_left"] = urgent.apply(_urgency_days, axis=1)
+    urgent = urgent.sort_values("_days_left").head(10)
 
     del_rows = ""
     for _, r in urgent.iterrows():
-        due_d = r.get("_due_date")
+        due_d     = r.get("_end_date")
         days_left = r.get("_days_left", 9999)
-        due_str = fmt_short(due_d) if due_d and pd.notna(due_d) else "—"
+        due_str   = fmt_short(due_d) if due_d and pd.notna(due_d) else "—"
 
         if days_left < 0:
             urgency_chip = f'<span style="font-size:0.68rem;background:#FEE2E2;color:#991B1B;border-radius:4px;padding:1px 6px;white-space:nowrap">{abs(int(days_left))}d overdue</span>'
@@ -519,22 +493,22 @@ with up_r:
             urgency_chip = f'<span style="font-size:0.68rem;background:#F1F5F9;color:#475569;border-radius:4px;padding:1px 6px">{int(days_left)}d left</span>'
 
         del_rows += f"""<tr>
-  <td>{r.get('Deliverable','')}</td>
-  <td>{r.get('Owner','—')}</td>
+  <td>{r.get('Main Task','')}</td>
+  <td>{str(r.get('Responsible Owner','—'))}</td>
   <td><span class="dchip">{due_str}</span>&nbsp;{urgency_chip}</td>
   <td>{badge(r['resolved_status'])}</td>
 </tr>"""
 
     if not del_rows:
-        del_rows = '<tr><td colspan="4" style="text-align:center;color:#94A3B8;padding:16px">No deliverables found.</td></tr>'
+        del_rows = '<tr><td colspan="4" style="text-align:center;color:#94A3B8;padding:16px">No tasks found.</td></tr>'
 
     st.markdown(f"""
-<div class="card" style="padding-bottom:16px">
-  <div class="card-title">Upcoming — Top 10 Urgent Deliverables</div>
-  <div style="max-height:340px;overflow-y:auto">
+<div class="card" style="padding-bottom:16px;height:auto !important">
+  <div class="card-title">Upcoming — Top 10 Urgent Tasks</div>
+  <div style="max-height:460px;overflow-y:auto">
     <table class="del-table">
       <thead style="position:sticky;top:0;z-index:2"><tr>
-        <th style="width:32%">Deliverable</th>
+        <th style="width:34%">Task</th>
         <th style="width:20%">Owner</th>
         <th style="width:28%">Due Date</th>
         <th style="width:16%">Status</th>
