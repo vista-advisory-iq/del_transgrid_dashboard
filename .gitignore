@@ -1,0 +1,49 @@
+# ── Credentials & secrets — NEVER commit these ────────────────────────────────
+credentials.json
+.env
+*.env.*
+service_account*.json
+
+# ── Streamlit local state ─────────────────────────────────────────────────────
+overrides.json
+.streamlit/secrets.toml      # local secrets file (use Streamlit Cloud UI instead)
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyw
+
+# ── Virtual environments ──────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ── Jupyter (used during development) ────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb
+
+# ── Data files — keep workplan.csv but exclude large exports ─────────────────
+# data/workplan.csv is intentionally tracked (seed data for setup_sheet.py)
+*.xlsx
+*.xls
+
+# ── OS generated ──────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ── IDEs ──────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.code-workspace
+
+# ── Logs & temp ───────────────────────────────────────────────────────────────
+*.log
+*.tmp
+*.bak
