@@ -179,7 +179,7 @@ project_end   = _end_dates.max() if not _end_dates.empty else (
 )
 
 day_num      = max((today - project_start).days + 1, 1)
-total_days   = (project_end - project_start).days
+total_days   = (project_end - project_start).days + 1
 progress_pct = min(day_num / total_days * 100, 100)
 
 all_ws = sorted(df["Workstream"].unique().tolist())
