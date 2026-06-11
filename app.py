@@ -166,12 +166,21 @@ df_dl = process_deliverables(raw["deliverables"])
 # Config values
 project_name  = cfg.get("Project Name",  "DEL × TransGrid SPV")
 client_name   = cfg.get("Client",        "DEL / TransGrid")
-project_start = _parse_config_date(cfg.get("Start Date", "")) or date(2026, 4, 27)
-project_end   = _parse_config_date(cfg.get("End Date",   "")) or date(2026, 9, 30)
 today         = date.today()
-day_num       = max((today - project_start).days + 1, 1)
-total_days    = (project_end - project_start).days
-progress_pct  = min(day_num / total_days * 100, 100)
+
+# Derive start/end from workplan data (min start date, max end date)
+_start_dates = df["_start_date"].dropna()
+_end_dates   = df["_end_date"].dropna()
+project_start = _start_dates.min() if not _start_dates.empty else (
+    _parse_config_date(cfg.get("Start Date", "")) or date(2026, 4, 27)
+)
+project_end   = _end_dates.max() if not _end_dates.empty else (
+    _parse_config_date(cfg.get("End Date", "")) or date(2026, 9, 30)
+)
+
+day_num      = max((today - project_start).days + 1, 1)
+total_days   = (project_end - project_start).days
+progress_pct = min(day_num / total_days * 100, 100)
 
 all_ws = sorted(df["Workstream"].unique().tolist())
 

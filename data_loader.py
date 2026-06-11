@@ -49,15 +49,15 @@ def _auto_status(row, today: date) -> str:
 
 
 def _resolve_status(row, today: date) -> str:
-    """
-    Priority:
-      1. Explicit 'Status' column in sheet (if valid value)
-      2. Auto-derived from dates
-    """
-    raw = str(row.get("Status", "")).strip()
+    raw     = str(row.get("Status", "")).strip()   # ← reads the Status column
+    end     = row.get("_end_date")
+    is_done = raw == "Completed"
+
+    if end and pd.notna(end) and today > end and not is_done:
+        return "Overdue"       # end date passed → Overdue (unless Completed)
     if raw in VALID_STATUSES:
-        return raw
-    return _auto_status(row, today)
+        return raw             # valid sheet value → use it directly
+    return "Not Started"       # blank or unrecognised → Not Started
 
 
 # ── workplan processor ────────────────────────────────────────────────────────
